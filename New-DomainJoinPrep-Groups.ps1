@@ -82,7 +82,7 @@ foreach ($prefix in $groups) {
 
     # Dieses Präfix hat eine default OU vordefiniert
     if ($ou_list.group.Contains($prefix)) {
-        $ou = $ou_list | Where-Object {$_.Gruppe -eq $prefix} | Select-Object -ExpandProperty ou
+        $ou = $ou_list | Where-Object {$_.group -eq $prefix} | Select-Object -ExpandProperty ou
         $ou_note = "`n    [Default] organizational units found for prefix [$prefix]: $ou`n    Accept with [ENTER] or write new ones."
     }
     # prompt for ou path
@@ -93,7 +93,7 @@ foreach ($prefix in $groups) {
     if ($ou_prompt) { $ou = $ou_prompt }
 
     # pre-construct ou path for group creation
-    $ou_path = (",OU=", ($ou.Split(', ').Trim() -join ",OU=") -join "")
+    $ou_path = (",OU=", ($ou.Split(',').Trim() -join ",OU=") -join "")
     $path = ($ou_path, $dc_path -join "")
 
     # need to create parents first
@@ -140,7 +140,7 @@ foreach ($prefix in $groups) {
         $common_name = "$prefix`_R$Room`_PC$client$Suffix"
         $scope = if ($common_name.Substring(0, 4) -eq "ACL_") { "DomainLocal" } else { "Global" }
 
-        $member_name = ($members_list | Where-Object {$_.Gruppe -eq $prefix}).Member
+        $member_name = ($members_list | Where-Object {$_.group -eq $prefix}).Member
         $member_group = "$member_name`_R$Room`_PC$client$Suffix"
 
         try {
@@ -174,7 +174,7 @@ foreach ($prefix in $groups) {
     }
 }
 
-Write-Output "`nScript ausgeführt mit $error_counter Fehlern.`n"
+Write-Output "`nScript finished with $error_counter errors.`n"
 
 <#
 
