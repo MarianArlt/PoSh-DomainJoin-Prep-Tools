@@ -19,6 +19,7 @@ param (
 $default_groups = @("ACL_RD-RAP", "ACL_User", "GG_User", "GG")
 
 # add members to groups
+# when adding multiple members do so in an array
 $members_list = @(
     [PSCustomObject]@{
         group = "ACL_RD-RAP";
@@ -27,10 +28,6 @@ $members_list = @(
     [PSCustomObject]@{
         group = "ACL_User";
         members = "GG_User"
-    }
-    [PSCustomObject]@{
-        group = "GG_User";
-        members = @("RDTest")
     }
 )
 
