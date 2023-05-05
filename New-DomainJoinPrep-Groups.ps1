@@ -140,7 +140,7 @@ foreach ($prefix in $groups) {
         $common_name = "$prefix`_R$Room`_PC$client$Suffix"
         $scope = if ($common_name.Substring(0, 4) -eq "ACL_") { "DomainLocal" } else { "Global" }
 
-        $member_name = ($members_list | Where-Object {$_.group -eq $prefix}).Member
+        $member_name = ($members_list | Where-Object {$_.group -eq $prefix}).members
         $member_group = "$member_name`_R$Room`_PC$client$Suffix"
 
         try {
