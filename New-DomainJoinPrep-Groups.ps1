@@ -34,19 +34,19 @@ $members_list = @(
 $ou_list = @(
     [PSCustomObject]@{
         group = "ACL_RD-RAP";
-        ou = @("OU_R$Room", "OU_ACL-Gruppen", "OU_Gruppen")
+        ou = @("OU_R$Room", "OU_ACL-Groups", "OU_Groups")
     }
     [PSCustomObject]@{
         group = "ACL_User";
-        ou = @("OU_R$Room", "OU_ACL-Gruppen", "OU_Gruppen")
+        ou = @("OU_R$Room", "OU_ACL-Groups", "OU_Groups")
     }
     [PSCustomObject]@{
         group = "GG_User";
-        ou = @("OU_R$Room", "OU_GlobaleGruppen", "OU_Gruppen")
+        ou = @("OU_R$Room", "OU_Global-Groups", "OU_Groups")
     }
     [PSCustomObject]@{
         group = "GG";
-        ou = @("OU_R$Room", "OU_GlobaleGruppen", "OU_Gruppen")
+        ou = @("OU_R$Room", "OU_Global-Groups", "OU_Groups")
     }
 )
 
