@@ -17,7 +17,9 @@ param (
 )
 
 $default_groups = @("ACL_RD-RAP", "ACL_User", "GG_User", "GG")
-$account_reference = "Computer Accounts"
+
+# actual name is not important, this triggers creation of computer accounts
+$computer_accounts = "Hosts"
 
 # add members to groups
 # when adding multiple members do so in an array
@@ -32,7 +34,7 @@ $members_list = @(
     }
     [PSCustomObject]@{
         group = "GG";
-        members = @($account_reference) # not technically a group, reference to accounts
+        members = @($computer_accounts)
     }
 )
 
@@ -54,7 +56,7 @@ $ou_list = @(
         ou = @("OU_R$Room", "OU_Global-Groups", "OU_Groups")
     }
     [PSCustomObject]@{
-        group = $account_reference; # not technically a group, reference to accounts
+        group = $computer_accounts;
         ou = @("OU_HV-Server_R$Room", "OU_Classrooms")
     }
 )
@@ -79,8 +81,8 @@ Write-Output ($groups_note, "`n    ", ($groups.Count * $Hosts), "groups with", $
 $groups = $groups | Sort-Object -Descending
 
 # these will not create groups but accounts instead
-if ($ou_list.group.Contains($account_reference)) {
-    $groups = ,$account_reference + $groups
+if ($ou_list.group.Contains($computer_accounts)) {
+    $groups = ,$computer_accounts + $groups
 }
 
 # pre-construct dc path for group creation
@@ -158,7 +160,7 @@ foreach ($prefix in $groups) {
         $member_group = "$member_name`_$host_name"
 
         try {
-            if ($prefix -eq $account_reference) {
+            if ($prefix -eq $computer_accounts) {
                 # create computers
                 New-ADComputer -Name $host_name -SAMAccountName $host_name -Path $path.substring(1)
             } else {                
@@ -181,7 +183,7 @@ foreach ($prefix in $groups) {
             if ($member_name -And $member_is_group) {
                 Add-ADGroupMember -Identity $common_name -Members $member_group -ErrorAction Stop
             } elseif ($member_name) {
-                if ($member_name -eq $account_reference) {
+                if ($member_name -eq $computer_accounts) {
                     $member_name = "$host_name`$"
                 }
                 Add-ADGroupMember -Identity $common_name -Members $member_name -ErrorAction Stop
