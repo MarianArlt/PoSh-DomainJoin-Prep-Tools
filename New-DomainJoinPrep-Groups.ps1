@@ -17,17 +17,22 @@ param (
 )
 
 $default_groups = @("ACL_RD-RAP", "ACL_User", "GG_User", "GG")
+$account_reference = "Computer Accounts"
 
 # add members to groups
 # when adding multiple members do so in an array
 $members_list = @(
     [PSCustomObject]@{
         group = "ACL_RD-RAP";
-        members = "GG"
+        members = @("GG")
     }
     [PSCustomObject]@{
         group = "ACL_User";
-        members = "GG_User"
+        members = @("GG_User")
+    }
+    [PSCustomObject]@{
+        group = "GG";
+        members = @($account_reference) # not technically a group, reference to accounts
     }
 )
 
@@ -48,6 +53,10 @@ $ou_list = @(
         group = "GG";
         ou = @("OU_R$Room", "OU_Global-Groups", "OU_Groups")
     }
+    [PSCustomObject]@{
+        group = $account_reference; # not technically a group, reference to accounts
+        ou = @("OU_HV-Server_R$Room", "OU_Classrooms")
+    }
 )
 
 # suffix was passed as empty
@@ -66,8 +75,14 @@ if (!$groups) {
 # user feedback
 Write-Output ($groups_note, "`n    ", ($groups.Count * $Hosts), "groups with", $groups.Count, "different prefixes will be created." -join " ")
 
-# sort to craete GG_ before ACL_
+# sort to create GG_ before ACL_
 $groups = $groups | Sort-Object -Descending
+
+# these will not create groups but accounts instead
+if ($ou_list.group.Contains($account_reference)) {
+    $groups = ,$account_reference + $groups
+}
+
 # pre-construct dc path for group creation
 $dc_path = (",DC=", ($Domain.Split('.') -join ",DC=") -join "")
 # filter errors for log file
@@ -130,19 +145,26 @@ foreach ($prefix in $groups) {
     # reset ou order
     [Array]::Reverse($ou)
 
-    # create a group for each workstation and if necessary add members
+    # create an account and a group for each workstation and if necessary add members
     for ($i = 0; $i -lt $Hosts * 10; $i += 10) {
         $client = ([string]($i + 10)).PadLeft(3, '0')
 
-        $common_name = "$prefix`_R$Room`_PC$client$Suffix"
+        $host_name = "R$Room`_PC$client$Suffix"
+
+        $common_name = "$prefix`_$host_name"
         $scope = if ($common_name.Substring(0, 4) -eq "ACL_") { "DomainLocal" } else { "Global" }
 
         $member_name = ($members_list | Where-Object {$_.group -eq $prefix}).members
-        $member_group = "$member_name`_R$Room`_PC$client$Suffix"
+        $member_group = "$member_name`_$host_name"
 
         try {
-            # create group
-            New-ADGroup -Name $common_name -Path $path.substring(1) -GroupScope $scope -GroupCategory Security -ErrorAction Stop
+            if ($prefix -eq $account_reference) {
+                # create computers
+                New-ADComputer -Name $host_name -SAMAccountName $host_name -Path $path.substring(1)
+            } else {                
+                # create group
+                New-ADGroup -Name $common_name -Path $path.substring(1) -GroupScope $scope -GroupCategory Security -ErrorAction Stop
+            }
         }
         catch {
             $message = $_
@@ -159,6 +181,9 @@ foreach ($prefix in $groups) {
             if ($member_name -And $member_is_group) {
                 Add-ADGroupMember -Identity $common_name -Members $member_group -ErrorAction Stop
             } elseif ($member_name) {
+                if ($member_name -eq $account_reference) {
+                    $member_name = "$host_name`$"
+                }
                 Add-ADGroupMember -Identity $common_name -Members $member_name -ErrorAction Stop
             }
         }
